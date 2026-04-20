@@ -1,0 +1,10 @@
+# Copy this file to terraform.tfvars and fill in your values.
+# Never commit terraform.tfvars to version control.
+
+do_token        = "your_digitalocean_personal_access_token"
+ssh_fingerprint = "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99"
+
+# Optional overrides (defaults shown below)
+# droplet_name = "mern-app"
+# region       = "sgp1"
+# size         = "s-2vcpu-4gb"

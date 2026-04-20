@@ -1,0 +1,45 @@
+---
+- name: Create application directory
+  file:
+    path: /opt/app
+    state: directory
+    mode: "0755"
+
+- name: Create monitoring directory structure
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - /opt/app/monitoring/prometheus
+    - /opt/app/monitoring/grafana/provisioning/datasources
+    - /opt/app/monitoring/grafana/provisioning/dashboards
+    - /opt/app/monitoring/grafana/dashboards
+
+- name: Copy docker-compose.yml
+  copy:
+    src: "{{ playbook_dir }}/../docker-compose.yml"
+    dest: /opt/app/docker-compose.yml
+    mode: "0644"
+
+- name: Copy monitoring configuration
+  copy:
+    src: "{{ playbook_dir }}/../monitoring/"
+    dest: /opt/app/monitoring/
+    mode: "0644"
+
+- name: Write .env file from vault variables
+  template:
+    src: .env.j2
+    dest: /opt/app/.env
+    mode: "0600"
+
+- name: Pull Docker images
+  command: docker compose pull
+  args:
+    chdir: /opt/app
+
+- name: Start all services
+  command: docker compose up -d --remove-orphans
+  args:
+    chdir: /opt/app

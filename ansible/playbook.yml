@@ -1,0 +1,8 @@
+---
+- name: Setup and deploy MERN application
+  hosts: droplet
+  become: true
+
+  roles:
+    - docker
+    - deploy
