@@ -292,13 +292,13 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "rate(mongodb_ss_network_bytesIn_total[5m])",
+          "expr": "rate(mongodb_ss_network_bytesIn[5m])",
           "legendFormat": "Network In",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "rate(mongodb_ss_network_bytesOut_total[5m])",
+          "expr": "rate(mongodb_ss_network_bytesOut[5m])",
           "legendFormat": "Network Out",
           "refId": "B"
         }
