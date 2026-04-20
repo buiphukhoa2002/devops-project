@@ -12,9 +12,9 @@ A full-stack task management application built with **MongoDB, Express, React, a
    - [Step 1 — Push the repository to GitHub](#step-1--push-the-repository-to-github)
    - [Step 2 — Create a Docker Hub repository](#step-2--create-a-docker-hub-repository)
    - [Step 3 — Provision the VPS with Terraform](#step-3--provision-the-vps-with-terraform)
-   - [Step 4 — Configure the server with Ansible](#step-4--configure-the-server-with-ansible)
-   - [Step 5 — Add GitHub repository secrets](#step-5--add-github-repository-secrets)
-   - [Step 6 — Trigger the first deployment](#step-6--trigger-the-first-deployment)
+   - [Step 4 — Add GitHub repository secrets](#step-4--add-github-repository-secrets)
+   - [Step 5 — Trigger the first CI/CD run](#step-5--trigger-the-first-cicd-run)
+   - [Step 6 — Configure the server with Ansible](#step-6--configure-the-server-with-ansible)
    - [Step 7 — Verify everything is running](#step-7--verify-everything-is-running)
 4. [Running Locally with Docker](#running-locally-with-docker)
 5. [Monitoring — Grafana & Prometheus](#monitoring--grafana--prometheus)
@@ -155,82 +155,31 @@ Copy this IP — you need it for Steps 4 and 5.
 
 ---
 
-### Step 4 — Configure the server with Ansible
+### Step 4 — Add GitHub repository secrets
 
-Ansible connects to the fresh droplet, installs Docker, copies all application files, and starts every service for the **first time**.
-
-#### 4.1 — Update the inventory
-
-Open [ansible/inventory.ini](ansible/inventory.ini) and replace `<DROPLET_IP>` with the IP from Step 3.6:
-
-```ini
-[droplet]
-mern-app ansible_host=YOUR_DROPLET_IP ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_rsa
-```
-
-#### 4.2 — Create a secrets file (Ansible Vault)
-
-```bash
-cd ansible
-ansible-vault create secrets.yml
-```
-
-Ansible will open your editor. Paste the following and fill in real values:
-
-```yaml
-mongo_uri: "mongodb://mongo:27017/taskapp"
-jwt_secret: "a_long_random_string_at_least_32_chars"
-email_user: "your@gmail.com"
-email_pass: "your_gmail_app_password"
-docker_username: "your_dockerhub_username"
-grafana_admin_password: "a_strong_grafana_password"
-```
-
-Save and close. The file is now AES-256 encrypted.
-
-> **Gmail App Password:** Go to your Google Account → **Security → 2-Step Verification → App Passwords** to generate one. Do not use your main Gmail password.
-
-#### 4.3 — Run the playbook
-
-```bash
-ansible-playbook -i inventory.ini playbook.yml --extra-vars "@secrets.yml" --ask-vault-pass
-```
-
-Enter the vault password when prompted. Ansible will:
-
-1. Install Docker CE and the Compose plugin
-2. Create `/opt/app` on the droplet
-3. Copy `docker-compose.yml` and `monitoring/` to the droplet
-4. Write `/opt/app/.env` from your vault variables
-5. Run `docker compose pull && docker compose up -d`
-
-The application is now live. You can verify at `http://YOUR_DROPLET_IP`.
-
----
-
-### Step 5 — Add GitHub repository secrets
-
-These secrets allow GitHub Actions to push images and redeploy on every future push to `main`.
+These secrets allow GitHub Actions to build and push images, and to SSH into the droplet for deployment. They must be in place **before** triggering the first pipeline run.
 
 Go to your GitHub repository → **Settings → Secrets and variables → Actions → New repository secret** and add each of the following:
 
-| Secret                   | Value                                              |
-| ------------------------ | -------------------------------------------------- |
-| `DOCKER_USERNAME`        | Your Docker Hub username                           |
-| `DOCKER_PASSWORD`        | The Docker Hub access token from Step 2            |
-| `SSH_PRIVATE_KEY`        | Full contents of `~/.ssh/id_rsa` (the private key) |
-| `DROPLET_IP`             | The IP from `terraform output droplet_ip`          |
-| `MONGO_URI`              | `mongodb://mongo:27017/taskapp`                    |
-| `JWT_SECRET`             | Same value used in Ansible                         |
-| `EMAIL_USER`             | Your Gmail address                                 |
-| `EMAIL_PASS`             | Your Gmail App Password                            |
-| `GRAFANA_ADMIN_PASSWORD` | Same value used in Ansible                         |
+| Secret                   | Value                                           |
+| ------------------------ | ----------------------------------------------- |
+| `DOCKER_USERNAME`        | Your Docker Hub username                        |
+| `DOCKER_PASSWORD`        | The Docker Hub access token from Step 2         |
+| `SSH_PRIVATE_KEY`        | Full contents of your SSH private key file      |
+| `DROPLET_IP`             | The IP from `terraform output droplet_ip`       |
+| `MONGO_URI`              | `mongodb://mongo:27017/taskapp`                 |
+| `JWT_SECRET`             | A random string, at least 32 characters         |
+| `EMAIL_USER`             | Your Gmail address                              |
+| `EMAIL_PASS`             | Your Gmail App Password                         |
+| `GRAFANA_ADMIN_PASSWORD` | A strong password for the Grafana admin account |
 
 > To copy your private key on Linux/macOS: `cat ~/.ssh/id_rsa` — paste the **entire** output including the `-----BEGIN` and `-----END` lines.
 
 ---
 
-### Step 6 — Trigger the first deployment
+### Step 5 — Trigger the first CI/CD run
+
+> **This must happen before Ansible.** Ansible runs `docker compose pull`, which requires the images to already exist on Docker Hub. The CI/CD pipeline is what builds and pushes them.
 
 Push any change to `main` to trigger the full CI/CD pipeline:
 
@@ -254,7 +203,62 @@ deploy  (runs after build-and-push succeeds)
   └── Runs: docker compose pull && docker compose up -d --remove-orphans
 ```
 
-Every subsequent push to `main` repeats this automatically — no manual steps needed.
+Wait for the `deploy` job to show a green checkmark before continuing.
+
+---
+
+### Step 6 — Configure the server with Ansible
+
+Ansible connects to the droplet, installs Docker, copies all application files, and starts every service. By this point the images already exist on Docker Hub (pushed in Step 5), so `docker compose pull` will succeed.
+
+#### 6.1 — Update the inventory
+
+Open [ansible/inventory.ini](ansible/inventory.ini) and replace `<DROPLET_IP>` with the IP from Step 3.6:
+
+```ini
+[droplet]
+mern-app ansible_host=YOUR_DROPLET_IP ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_rsa
+```
+
+#### 6.2 — Create a secrets file (Ansible Vault)
+
+```bash
+cd ansible
+ansible-vault create secrets.yml
+```
+
+Ansible will open your editor. Paste the following and fill in the **same values** you used in Step 4:
+
+```yaml
+mongo_uri: "mongodb://mongo:27017/taskapp"
+jwt_secret: "same_jwt_secret_as_github_secret"
+email_user: "your@gmail.com"
+email_pass: "your_gmail_app_password"
+docker_username: "your_dockerhub_username"
+grafana_admin_password: "same_grafana_password_as_github_secret"
+```
+
+Save and close. The file is now AES-256 encrypted.
+
+> **Gmail App Password:** Go to your Google Account → **Security → 2-Step Verification → App Passwords** to generate one. Do not use your main Gmail password.
+
+#### 6.3 — Run the playbook
+
+```bash
+ansible-playbook -i inventory.ini playbook.yml \
+  --extra-vars "@secrets.yml" \
+  --ask-vault-pass
+```
+
+Enter the vault password when prompted. Ansible will:
+
+1. Install Docker CE and the Compose plugin
+2. Create `/opt/app` on the droplet
+3. Copy `docker-compose.yml` and `monitoring/` to the droplet
+4. Write `/opt/app/.env` from your vault variables
+5. Pull images from Docker Hub and run `docker compose up -d`
+
+The application is now live.
 
 ---
 

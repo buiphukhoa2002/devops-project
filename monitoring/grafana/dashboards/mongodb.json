@@ -88,7 +88,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "mongodb_connections{state=\"current\"}",
+          "expr": "mongodb_ss_connections{conn_type=\"current\"}",
           "legendFormat": "Current",
           "refId": "A"
         }
@@ -127,7 +127,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "mongodb_memory{type=\"resident\"}",
+          "expr": "mongodb_ss_mem_resident",
           "legendFormat": "Resident MB",
           "refId": "A"
         }
@@ -166,7 +166,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "mongodb_connections{state=\"available\"}",
+          "expr": "mongodb_ss_connections{conn_type=\"available\"}",
           "legendFormat": "Available",
           "refId": "A"
         }
@@ -190,13 +190,13 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "mongodb_connections{state=\"current\"}",
+          "expr": "mongodb_ss_connections{conn_type=\"current\"}",
           "legendFormat": "Current",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "mongodb_connections{state=\"available\"}",
+          "expr": "mongodb_ss_connections{conn_type=\"available\"}",
           "legendFormat": "Available",
           "refId": "B"
         }
@@ -220,25 +220,25 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "rate(mongodb_op_counters_total{type=\"insert\"}[5m])",
+          "expr": "rate(mongodb_ss_opcounters_total{legacy_op_type=\"insert\"}[5m])",
           "legendFormat": "Inserts",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "rate(mongodb_op_counters_total{type=\"query\"}[5m])",
+          "expr": "rate(mongodb_ss_opcounters_total{legacy_op_type=\"query\"}[5m])",
           "legendFormat": "Queries",
           "refId": "B"
         },
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "rate(mongodb_op_counters_total{type=\"update\"}[5m])",
+          "expr": "rate(mongodb_ss_opcounters_total{legacy_op_type=\"update\"}[5m])",
           "legendFormat": "Updates",
           "refId": "C"
         },
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "rate(mongodb_op_counters_total{type=\"delete\"}[5m])",
+          "expr": "rate(mongodb_ss_opcounters_total{legacy_op_type=\"delete\"}[5m])",
           "legendFormat": "Deletes",
           "refId": "D"
         }
@@ -262,13 +262,13 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "mongodb_memory{type=\"resident\"}",
+          "expr": "mongodb_ss_mem_resident",
           "legendFormat": "Resident",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "mongodb_memory{type=\"virtual\"}",
+          "expr": "mongodb_ss_mem_virtual",
           "legendFormat": "Virtual",
           "refId": "B"
         }
@@ -292,13 +292,13 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "rate(mongodb_network_bytes_total{state=\"in_bytes\"}[5m])",
+          "expr": "rate(mongodb_ss_network_bytes_in_total[5m])",
           "legendFormat": "Network In",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "rate(mongodb_network_bytes_total{state=\"out_bytes\"}[5m])",
+          "expr": "rate(mongodb_ss_network_bytes_out_total[5m])",
           "legendFormat": "Network Out",
           "refId": "B"
         }
