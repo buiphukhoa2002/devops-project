@@ -245,9 +245,7 @@ Save and close. The file is now AES-256 encrypted.
 #### 6.3 — Run the playbook
 
 ```bash
-ansible-playbook -i inventory.ini playbook.yml \
-  --extra-vars "@secrets.yml" \
-  --ask-vault-pass
+ansible-playbook -i inventory.ini playbook.yml --extra-vars "@secrets.yml" --ask-vault-pass
 ```
 
 Enter the vault password when prompted. Ansible will:
