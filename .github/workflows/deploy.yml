@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  # ── Build & push Docker images to Docker Hub ──────────────────────────────
+  # Build & push Docker images to Docker Hub
   build-and-push:
     name: Build and Push Images
     runs-on: ubuntu-latest
@@ -46,7 +46,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # ── Deploy to DigitalOcean droplet ────────────────────────────────────────
+  # Deploy to DigitalOcean droplet
   deploy:
     name: Deploy to Droplet
     runs-on: ubuntu-latest
